@@ -1,13 +1,13 @@
 set -x
 
 export NCCL_CUMEM_ENABLE=0
-export WANDB_MODE=
-export WANDB_DIR=
-export WANDB_KEY=
+export WANDB_MODE=offline
+export WANDB_DIR=./.wandb_logs
+export WANDB_KEY=3eb7f9637fc1a5a7903f3c4acb034dce0d346dd4
 
-BS=256
-EP=3
-LR=1e-5
+BS=256 # 256
+EP=3 # 3
+LR=1e-5 # 1e-5
 
 TRIAL_NAME=sft_cot
 MODEL_PATH=Qwen/Qwen2.5-Math-1.5B
@@ -47,5 +47,5 @@ src.cli.train_sft \
    --wandb_run_name $TRIAL_NAME 
 EOF
 
-torchrun --nproc_per_node 4 --nnodes 1 --node_rank 0 \
+torchrun --nproc_per_node 1 --nnodes 1 --node_rank 0 \
     --master_addr "127.0.0.1" --master_port 12345 -m ${training_commands}

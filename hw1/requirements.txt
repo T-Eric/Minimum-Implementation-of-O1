@@ -8,7 +8,6 @@ airportsdata==20241001
 annotated-types==0.7.0
 antlr4-python3-runtime==4.13.2
 anyio==4.8.0
-apex @ git+https://github.com/NVIDIA/apex@b216eeee7dd91478745496919e9c0167cc4c41e3
 astor==0.8.1
 async-timeout==5.0.1
 attrs==24.3.0

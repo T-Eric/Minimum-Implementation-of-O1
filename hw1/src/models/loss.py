@@ -63,17 +63,21 @@ class PolicyLoss(nn.Module):
         self.clip_eps = clip_eps
 
     def forward(
-        self,
-        log_probs: torch.Tensor,
-        old_log_probs: torch.Tensor,
-        advantages: torch.Tensor,
-        action_mask: Optional[torch.Tensor] = None,
+            self,
+            log_probs: torch.Tensor,
+            old_log_probs: torch.Tensor,
+            advantages: torch.Tensor,
+            action_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        loss=None
-        ######################
-        # 根据deepseekmath, deepseek r1中的paper，实现loss函数
-        # 不需要实现klloss
-        ######################
+        # TODO: maybe add KL penalty
+        ratio = torch.exp(log_probs - old_log_probs)
+        if self.clip_eps is not None:
+            surr1 = ratio * advantages
+            surr2 = ratio.clamp(1 - self.clip_eps, 1 + self.clip_eps) * advantages
+            loss = -torch.min(surr1, surr2)
+        else:
+            loss = -ratio * advantages
+        loss = masked_mean(loss, action_mask, dim=-1).mean()
         return loss
 
 
@@ -87,11 +91,11 @@ class ValueLoss(nn.Module):
         self.clip_eps = clip_eps
 
     def forward(
-        self,
-        values: torch.Tensor,
-        old_values: torch.Tensor,
-        returns: torch.Tensor,
-        action_mask: Optional[torch.Tensor] = None,
+            self,
+            values: torch.Tensor,
+            old_values: torch.Tensor,
+            returns: torch.Tensor,
+            action_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         if self.clip_eps is not None:
             values_clipped = old_values + (values - old_values).clamp(-self.clip_eps, self.clip_eps)
@@ -111,7 +115,7 @@ class PairWiseLoss(nn.Module):
     """
 
     def forward(
-        self, chosen_reward: torch.Tensor, reject_reward: torch.Tensor, margin: torch.Tensor = None
+            self, chosen_reward: torch.Tensor, reject_reward: torch.Tensor, margin: torch.Tensor = None
     ) -> torch.Tensor:
         if margin is not None:
             loss = -F.logsigmoid(chosen_reward - reject_reward - margin)
@@ -127,7 +131,7 @@ class LogExpLoss(nn.Module):
     """
 
     def forward(
-        self, chosen_reward: torch.Tensor, reject_reward: torch.Tensor, margin: torch.Tensor = None
+            self, chosen_reward: torch.Tensor, reject_reward: torch.Tensor, margin: torch.Tensor = None
     ) -> torch.Tensor:
         loss = torch.log(1 + torch.exp(reject_reward - chosen_reward)).mean()
         return loss
@@ -145,11 +149,11 @@ class DPOLoss(nn.Module):
         self.ipo = ipo
 
     def forward(
-        self,
-        policy_chosen_logps: torch.Tensor,
-        policy_rejected_logps: torch.Tensor,
-        reference_chosen_logps: torch.Tensor,
-        reference_rejected_logps: torch.Tensor,
+            self,
+            policy_chosen_logps: torch.Tensor,
+            policy_rejected_logps: torch.Tensor,
+            reference_chosen_logps: torch.Tensor,
+            reference_rejected_logps: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         pi_logratios = policy_chosen_logps - policy_rejected_logps
         ref_logratios = reference_chosen_logps - reference_rejected_logps
@@ -160,8 +164,8 @@ class DPOLoss(nn.Module):
         else:
             # Eq. 3 https://ericmitchell.ai/cdpo.pdf; label_smoothing=0 gives original DPO (Eq. 7 of https://arxiv.org/pdf/2305.18290.pdf)
             losses = (
-                -F.logsigmoid(self.beta * logits) * (1 - self.label_smoothing)
-                - F.logsigmoid(-self.beta * logits) * self.label_smoothing
+                    -F.logsigmoid(self.beta * logits) * (1 - self.label_smoothing)
+                    - F.logsigmoid(-self.beta * logits) * self.label_smoothing
             )
 
         loss = losses.mean()
@@ -182,11 +186,11 @@ class VanillaKTOLoss(nn.Module):
         self.beta = beta
 
     def forward(
-        self,
-        policy_chosen_logps: torch.FloatTensor,
-        policy_rejected_logps: torch.FloatTensor,
-        reference_chosen_logps: torch.FloatTensor,
-        reference_rejected_logps: torch.FloatTensor,
+            self,
+            policy_chosen_logps: torch.FloatTensor,
+            policy_rejected_logps: torch.FloatTensor,
+            reference_chosen_logps: torch.FloatTensor,
+            reference_rejected_logps: torch.FloatTensor,
     ) -> Tuple[torch.FloatTensor, torch.FloatTensor, torch.FloatTensor]:
         chosen_KL = (policy_chosen_logps - reference_chosen_logps).mean().clamp(min=0)
         rejected_KL = (policy_rejected_logps - reference_rejected_logps).mean().clamp(min=0)
@@ -214,7 +218,7 @@ class KTOLoss(nn.Module):
     """
 
     def __init__(
-        self, beta: float, desirable_weight: float, undesirable_weight: float, world_size: int, device: torch.device
+            self, beta: float, desirable_weight: float, undesirable_weight: float, world_size: int, device: torch.device
     ) -> None:
         super().__init__()
         self.beta = beta
@@ -224,13 +228,13 @@ class KTOLoss(nn.Module):
         self.undesirable_weight = undesirable_weight
 
     def forward(
-        self,
-        policy_chosen_logps: torch.FloatTensor,
-        policy_rejected_logps: torch.FloatTensor,
-        policy_KL_logps: torch.FloatTensor,
-        reference_chosen_logps: torch.FloatTensor,
-        reference_rejected_logps: torch.FloatTensor,
-        reference_KL_logps: torch.FloatTensor,
+            self,
+            policy_chosen_logps: torch.FloatTensor,
+            policy_rejected_logps: torch.FloatTensor,
+            policy_KL_logps: torch.FloatTensor,
+            reference_chosen_logps: torch.FloatTensor,
+            reference_rejected_logps: torch.FloatTensor,
+            reference_KL_logps: torch.FloatTensor,
     ) -> Tuple[torch.FloatTensor, torch.FloatTensor, torch.FloatTensor]:
         KL = (policy_KL_logps - reference_KL_logps).mean().detach()
         # all_reduce sums up the KL estimates across all devices (gradient will also be scaled by world size)

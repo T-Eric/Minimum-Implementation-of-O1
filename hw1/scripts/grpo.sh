@@ -5,7 +5,7 @@ export TOKENIZERS_PARALLELISM=False
 
 # wandb setting
 export WANDB_MODE=offline or online
-export WANDB_DIR=
+export WANDB_DIR=./.wandb_logs
 pkill -f ray
 
 

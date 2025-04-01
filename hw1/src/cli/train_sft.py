@@ -2,6 +2,7 @@ import argparse
 import math
 import os
 from datetime import datetime
+from dotenv import load_dotenv
 
 from transformers.trainer import get_scheduler
 
@@ -186,8 +187,8 @@ if __name__ == "__main__":
         type=int,
         default=1,
         help="the number of heads to do ring attention each time. "
-        "It should be a divisor of the number of heads. "
-        "A larger value may results in faster training but will consume more memory.",
+             "It should be a divisor of the number of heads. "
+             "A larger value may results in faster training but will consume more memory.",
     )
 
     # LoRA

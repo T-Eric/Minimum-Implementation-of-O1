@@ -1,10 +1,9 @@
 set -x
 
 export NCCL_CUMEM_ENABLE=0
-export WANDB_MODE=
-export WANDB_DIR=
-export WANDB_KEY=
-
+export WANDB_MODE=offline
+export WANDB_DIR=./.wandb_logs
+export WANDB_KEY=3eb7f9637fc1a5a7903f3c4acb034dce0d346dd4
 
 BS=256
 EP=5
