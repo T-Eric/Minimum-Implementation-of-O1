@@ -2,7 +2,6 @@ import argparse
 import math
 import os
 from datetime import datetime
-from dotenv import load_dotenv
 
 from transformers.trainer import get_scheduler
 

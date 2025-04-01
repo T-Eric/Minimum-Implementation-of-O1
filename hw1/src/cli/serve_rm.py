@@ -2,6 +2,7 @@ import argparse
 import re
 import json
 import jsonlines
+from apex.contrib.test.bottleneck.test_bottleneck_module import ground_truth
 from datasets import load_from_disk
 import torch
 import uvicorn
@@ -165,7 +166,21 @@ class RuleBasedRMProxy:
                 # 1.从模型生成的response中提取模型的最终答案(hint: 分析sft数据输出最终答案的格式，使用self.boxed_pattern提取答案)
                 # 2.用prompt2answer获取prompt对应的groundtruth
                 # 3.用math_equal函数评估response是否正确，并据此给出reward
+                # 偷到的情报说，答错全部给-1.0，答对给1.0就可
+                # 去掉所有的相对路径
                 ######################
+
+                # 1
+                model_answer = self.boxed_pattern.search(response).group(1)
+
+                # 2
+                true_answer = self.prompt2answer.get(prompt)
+
+                # 3 important
+                if math_equal(true_answer, model_answer):
+                    score = 1.0
+                else:
+                    score = -1.0
 
                 return score
 
