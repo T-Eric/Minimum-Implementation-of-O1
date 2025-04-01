@@ -10,7 +10,7 @@ EP=5
 LR=1e-5
 
 TRIAL_NAME=sft_longcot
-MODEL_PATH=/Qwen/Qwen2.5-Math-1.5B
+MODEL_PATH=/mnt/data/Qwen2.5-Math-1.5B
 SAVE_PATH=../ckpts/longcot_sft
 DATA_PATH=./data/train/math3k_longcot.jsonl
 

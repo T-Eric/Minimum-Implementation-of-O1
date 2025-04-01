@@ -1,2 +1,4 @@
 .env
-.wandb_logs/
+.wandb_logs_sft_cot/
+.wandb_logs_sft_longcot/
+.wandb_logs_grpo/

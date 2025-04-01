@@ -1,27 +1,27 @@
 set -x
 
 export NCCL_CUMEM_ENABLE=0
-export WANDB_MODE=offline
-export WANDB_DIR=./.wandb_logs_sft_longcot
+export WANDB_MODE=online
+export WANDB_DIR=./.wandb_logs_sft_cot
 export WANDB_KEY=3eb7f9637fc1a5a7903f3c4acb034dce0d346dd4
 
-BS=256
-EP=5
-LR=1e-5
+BS=256 # 256
+EP=3 # 3
+LR=1e-5 # 1e-5
 
-TRIAL_NAME=sft_longcot
-MODEL_PATH=/Qwen/Qwen2.5-Math-1.5B
-SAVE_PATH=../ckpts/longcot_sft
-DATA_PATH=./data/train/math3k_longcot.jsonl
+TRIAL_NAME=sft_cot
+MODEL_PATH=/mnt/data/Qwen2.5-Math-1.5B
+SAVE_PATH=../ckpts/cot_sft
+DATA_PATH=./data/train/math3k_cot.jsonl
 
 read -r -d '' training_commands <<EOF
 src.cli.train_sft \
-   --max_len 16384 \
+   --max_len 2048 \
    --dataset $DATA_PATH \
    --input_key prompt \
    --output_key solution \
    --train_batch_size $BS \
-   --micro_train_batch_size 1 \
+   --micro_train_batch_size 4 \
    --apply_chat_template \
    --max_samples 50000000 \
    --pretrain $MODEL_PATH \
@@ -47,5 +47,5 @@ src.cli.train_sft \
    --wandb_run_name $TRIAL_NAME 
 EOF
 
-torchrun --nproc_per_node 4 --nnodes 1 --node_rank 0 \
+torchrun --nproc_per_node 1 --nnodes 1 --node_rank 0 \
     --master_addr "127.0.0.1" --master_port 12345 -m ${training_commands}

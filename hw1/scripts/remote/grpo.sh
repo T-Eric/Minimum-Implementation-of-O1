@@ -24,7 +24,7 @@ TRIAL_NAME=grpo_baseline
 
 DATA_PATH=./data/train/math3k_rl_prompt
 # model path
-POLICY_MODEL_PATH=Qwen/Qwen2.5-Math-1.5B
+POLICY_MODEL_PATH=/mnt/data/Qwen2.5-Math-1.5B
 
 
 SAVE_PATH=../ckpts/${TRIAL_NAME}
