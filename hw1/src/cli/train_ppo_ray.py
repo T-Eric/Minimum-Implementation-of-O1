@@ -26,20 +26,20 @@ def _validate_args(args):
     actor_world_size = args.actor_num_nodes * args.actor_num_gpus_per_node
 
     assert (
-        args.rollout_batch_size % actor_world_size == 0
+            args.rollout_batch_size % actor_world_size == 0
     ), f"rollout_bach_size must be divisible by actor_world_size, got {args.rollout_batch_size} and {actor_world_size}"
 
     assert args.zero_stage != 3 or args.vllm_num_engines > 0, f"ZeRO-3 is only supported when vLLM enabled"
 
     if args.vllm_num_engines > 0:
         assert (
-            actor_world_size % args.vllm_num_engines == 0
+                actor_world_size % args.vllm_num_engines == 0
         ), f"actor_world_size must be divisible by vllm_num_engines, got {actor_world_size} and {args.vllm_num_engines}"
 
     if args.critic_pretrain:
         critic_world_size = args.critic_num_nodes * args.critic_num_gpus_per_node
         assert (
-            actor_world_size % critic_world_size == 0
+                actor_world_size % critic_world_size == 0
         ), f"actor_world_size must be divisible by critic_world_size, got {actor_world_size} and {critic_world_size}"
 
 
@@ -53,7 +53,7 @@ def train(args):
     pg = None
     if args.colocate_actor_ref:
         assert (
-            args.actor_num_nodes == args.ref_num_nodes and args.actor_num_gpus_per_node == args.ref_num_gpus_per_node
+                args.actor_num_nodes == args.ref_num_nodes and args.actor_num_gpus_per_node == args.ref_num_gpus_per_node
         ), f"num_nodes and num_gpus_per_node must be the same when colocate actor and ref model."
 
         bundles = [
@@ -92,8 +92,8 @@ def train(args):
     pg = None
     if args.critic_pretrain and args.colocate_critic_reward:
         assert (
-            args.critic_num_nodes == args.reward_num_nodes
-            and args.critic_num_gpus_per_node == args.reward_num_gpus_per_node
+                args.critic_num_nodes == args.reward_num_nodes
+                and args.critic_num_gpus_per_node == args.reward_num_gpus_per_node
         ), f"num_nodes and num_gpus_per_node must be the same when colocate critic and reward model."
 
         bundles = [
@@ -234,7 +234,7 @@ if __name__ == "__main__":
     parser.add_argument("--local_rank", type=int, default=-1, help="local_rank for deepspeed")
     parser.add_argument("--zero_stage", type=int, default=2, help="DeepSpeed ZeRO stage")
     parser.add_argument("--gradient_checkpointing", action="store_true", default=False)
-    parser.add_argument("--bf16", action="store_true", default=False, help="Enable bfloat16")
+    parser.add_argument("--bf16", action="store_true", default=True, help="Enable bfloat16")  # orig False
     ## Make EMA as an optional feature
     parser.add_argument("--enable_ema", action="store_true", help="Enable EMA checkpoint for the model.")
     parser.add_argument("--zpg", type=int, default=1, help="ZeRO++ max partition size")
@@ -326,7 +326,8 @@ if __name__ == "__main__":
 
     # Custom dataset
     parser.add_argument("--prompt_data", type=str, default=None, help="HF dataset name or path")
-    parser.add_argument("--test_path", type=str, default="/inspire/hdd/ws-c6f77a66-a5f5-45dc-a4ce-1e856fe7a7b4/project/liupengfei-24025/xfli/o1/data/original_data/test.json")
+    parser.add_argument("--test_path", type=str,
+                        default="/inspire/hdd/ws-c6f77a66-a5f5-45dc-a4ce-1e856fe7a7b4/project/liupengfei-24025/xfli/o1/data/original_data/test.json")
     parser.add_argument(
         "--prompt_data_probs",
         type=str,

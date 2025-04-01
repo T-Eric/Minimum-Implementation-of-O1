@@ -145,8 +145,8 @@ class RuleBasedRMProxy:
             with timeout(self.timeout_seconds):
                 if args.template_type == "qwen":
                     prompt = \
-                    query.split("<|im_end|>\n<|im_start|>user\n")[-1].split("<|im_end|>\n<|im_start|>assistant\n")[
-                        0].strip()
+                        query.split("<|im_end|>\n<|im_start|>user\n")[-1].split("<|im_end|>\n<|im_start|>assistant\n")[
+                            0].strip()
                     response = query.split("<|im_end|>\n<|im_start|>assistant\n")[-1]
                     if "<|im_end|>" not in response and "<|endoftext|>" not in response:
                         return -1.0
