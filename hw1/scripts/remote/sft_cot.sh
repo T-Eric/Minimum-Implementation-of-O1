@@ -6,12 +6,12 @@ export WANDB_DIR=./.wandb_logs_sft_cot
 export WANDB_KEY=3eb7f9637fc1a5a7903f3c4acb034dce0d346dd4
 
 BS=256 # 256
-EP=3 # 3
+EP=5 # 3, 据说提高EP就能训出更好的sft_cot
 LR=1e-5 # 1e-5
 
-TRIAL_NAME=sft_cot
+TRIAL_NAME=sft_cot_long_epoch_1
 MODEL_PATH=/mnt/data/Qwen2.5-Math-1.5B
-SAVE_PATH=../ckpts/cot_sft
+SAVE_PATH=../ckpts/sft_1
 DATA_PATH=./data/train/math3k_cot.jsonl
 
 read -r -d '' training_commands <<EOF

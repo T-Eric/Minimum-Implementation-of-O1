@@ -122,3 +122,11 @@ src
 - O1 Replication Journey -- Part 3: Inference-time Scaling for Medical Reasoning
 - LIMO: Less is More for Reasoning
 - LIMR: Less is More for RL Scaling
+
+# 现状
+4.3
+- longcot得到了对长问题比较优秀的 `longcot_sft_long`，在四个bench上达到了baseline
+    - 做法：原装训练5Epoch，加长max_len并抛弃长度小于2048的训练数据，补充训练2Epoch
+- shortcot目前分别具有 `EP=3,4,5` 的 `sft_cot`, `sft_0`, `sft_1`
+- 下一步想做：
+    - 测试 `sft_0`, `sft_1` 的性能，择优继续做original longcot训练+长问题补练（时间够嘛。。。）
