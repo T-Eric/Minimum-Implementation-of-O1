@@ -220,10 +220,10 @@ if __name__ == "__main__":
     parser.add_argument("--enforce_eager", action="store_true", default=False, help="Disable CUDA graph in vLLM")
 
     # Checkpoints
-    parser.add_argument("--eval_steps", type=int, default=-1)
-    parser.add_argument("--save_steps", type=int, default=-1)
+    parser.add_argument("--eval_steps", type=int, default=10)
+    parser.add_argument("--save_steps", type=int, default=10)
     parser.add_argument("--logging_steps", type=int, default=1)
-    parser.add_argument("--ckpt_path", type=str, default="./ckpt/checkpoints_ppo_ray")
+    parser.add_argument("--ckpt_path", type=str, default="/mnt/data/jianghantao/Minimum-Implementation-of-O1/hw1/ckpt/checkpoints_ppo_ray")
     parser.add_argument("--save_hf_ckpt", action="store_true", default=True)
     parser.add_argument("--disable_ds_ckpt", action="store_true", default=False)
     parser.add_argument("--max_ckpt_num", type=int, default=3)
@@ -257,8 +257,8 @@ if __name__ == "__main__":
     parser.add_argument("--lora_dropout", type=float, default=0)
 
     # PPO
-    parser.add_argument("--save_path", type=str, default="./ckpt")
-    parser.add_argument("--samples_save_path", type=str, default='./data')
+    parser.add_argument("--save_path", type=str, default="/mnt/data/jianghantao/Minimum-Implementation-of-O1/hw1/ckpt")
+    parser.add_argument("--samples_save_path", type=str, default='/mnt/data/jianghantao/Minimum-Implementation-of-O1/hw1/data')
     parser.add_argument("--num_episodes", type=int, default=1)
     parser.add_argument("--rollout_batch_size", type=int, default=1024)
     parser.add_argument("--evaluation_batch_size", type=int, default=256)
@@ -327,7 +327,7 @@ if __name__ == "__main__":
     # Custom dataset
     parser.add_argument("--prompt_data", type=str, default=None, help="HF dataset name or path")
     parser.add_argument("--test_path", type=str,
-                        default="/inspire/hdd/ws-c6f77a66-a5f5-45dc-a4ce-1e856fe7a7b4/project/liupengfei-24025/xfli/o1/data/original_data/test.json")
+                        default="/mnt/data/jianghantao/Minimum-Implementation-of-O1/hw1/data/eval/RL.jsonl")
     parser.add_argument(
         "--prompt_data_probs",
         type=str,

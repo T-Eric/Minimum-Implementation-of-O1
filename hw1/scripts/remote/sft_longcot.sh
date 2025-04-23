@@ -27,9 +27,9 @@ BS=256 # 256
 EP=5 # 5
 LR=1e-5 # 1e-5
 
-TRIAL_NAME=sft_longcot_0_orig
+TRIAL_NAME=sft_longcot_1_orig
 MODEL_PATH=../ckpts/sft_1
-SAVE_PATH=../ckpts/long_sft_0_orig
+SAVE_PATH=../ckpts/long_sft_1_orig
 DATA_PATH=./data/train/math3k_longcot.jsonl
 
 # revised max_len 16384

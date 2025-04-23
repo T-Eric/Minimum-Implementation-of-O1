@@ -69,15 +69,15 @@ class PolicyLoss(nn.Module):
             advantages: torch.Tensor,
             action_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        # TODO: maybe add KL penalty
+        # PPO
         ratio = torch.exp(log_probs - old_log_probs)
         if self.clip_eps is not None:
             surr1 = ratio * advantages
             surr2 = ratio.clamp(1 - self.clip_eps, 1 + self.clip_eps) * advantages
-            loss = -torch.min(surr1, surr2)
+            policy_loss = -torch.min(surr1, surr2)
         else:
-            loss = -ratio * advantages
-        loss = masked_mean(loss, action_mask, dim=-1).mean()
+            policy_loss = -ratio * advantages
+        loss = masked_mean(policy_loss, action_mask, dim=-1).mean()
         return loss
 
 

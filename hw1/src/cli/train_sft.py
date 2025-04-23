@@ -140,13 +140,13 @@ def train(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Checkpoint
-    parser.add_argument("--save_path", type=str, default="./ckpt")
+    parser.add_argument("--save_path", type=str, default="/mnt/data/jianghantao/Minimum-Implementation-of-O1/hw1/ckpt")
     parser.add_argument("--save_steps", type=int, default=-1)
     parser.add_argument("--save_hf_ckpt", action="store_true", default=False)
     parser.add_argument("--disable_ds_ckpt", action="store_true", default=False)
     parser.add_argument("--logging_steps", type=int, default=1)
     parser.add_argument("--eval_steps", type=int, default=-1)
-    parser.add_argument("--ckpt_path", type=str, default="./ckpt/checkpoints_sft")
+    parser.add_argument("--ckpt_path", type=str, default="/mnt/data/jianghantao/Minimum-Implementation-of-O1/hw1/ckpt/checkpoints_sft")
     parser.add_argument("--max_ckpt_num", type=int, default=3)
     parser.add_argument("--max_ckpt_mem", type=int, default=1e8)
     parser.add_argument("--load_checkpoint", action="store_true", default=False)

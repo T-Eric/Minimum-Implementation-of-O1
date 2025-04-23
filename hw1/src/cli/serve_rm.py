@@ -2,7 +2,7 @@ import argparse
 import re
 import json
 import jsonlines
-from apex.contrib.test.bottleneck.test_bottleneck_module import ground_truth
+# from apex.contrib.test.bottleneck.test_bottleneck_module import ground_truth
 from datasets import load_from_disk
 import torch
 import uvicorn
@@ -121,6 +121,8 @@ class RuleBasedRMProxy:
     def __init__(self, args):
         self.args = args
         self.prompt2answer = {}
+        self.prompt2difficulty = {}
+        self.count=0
 
         dataset = load_from_disk(args.data_path)
         train_list = list(dataset["train"])
@@ -128,8 +130,10 @@ class RuleBasedRMProxy:
 
         for line in train_list:
             self.prompt2answer[line['context'].strip()] = str(line['answer'])
+            self.prompt2difficulty[line['context'].strip()] = str(line['difficulty'])
         for line in validation_list:
             self.prompt2answer[line['context'].strip()] = str(line['answer'])
+            self.prompt2difficulty[line['context'].strip()] = "hard"
 
         self.timeout_seconds = 2
         self.tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_path)
@@ -138,16 +142,16 @@ class RuleBasedRMProxy:
         self.english_pattern = re.compile(r'[a-zA-Z]')
         self.boxed_pattern = re.compile(
             r"\\boxed\{((?:[^{}]|\\{|\\}|(?:\{(?:[^{}]|\\{|\\}|(?:\{(?:[^{}]|\\{|\\}|(?:\{[^{}]*\}))*\}))*\}))*\})")
+        # self.boxed_pattern = re.compile(r"\\boxed\{([^{}]*)\}")
         self.valid_char_pattern = re.compile(r'[a-zA-Z0-9\s\.,!?"\'\(\)\{\}\[\]_\-+=<>/@#$%^&*\\|:;~`\u2200-\u22FF]')
-        self.repeat_pattern = re.compile(r'(.{5,}?)\1{4,}')
+        self.repeat_pattern = re.compile(r'(.{10,}?)\1{4,}')  # originally 5/4
 
     def get_score(self, query):
         try:
             with timeout(self.timeout_seconds):
                 if args.template_type == "qwen":
                     prompt = \
-                        query.split("<|im_end|>\n<|im_start|>user\n")[-1].split("<|im_end|>\n<|im_start|>assistant\n")[
-                            0].strip()
+                        query.split("<|im_end|>\n<|im_start|>user\n")[-1].split("<|im_end|>\n<|im_start|>assistant\n")[0].strip()
                     response = query.split("<|im_end|>\n<|im_start|>assistant\n")[-1]
                     if "<|im_end|>" not in response and "<|endoftext|>" not in response:
                         return -1.0
@@ -160,28 +164,83 @@ class RuleBasedRMProxy:
                     response = query.split("<｜Assistant｜>")[-1].strip()
 
                 score = None
+                self.count+=1
                 ######################
                 # 根据prompt, response, prompt2answer等写reward function
-                # 思路: 
+                # 思路:
                 # 1.从模型生成的response中提取模型的最终答案(hint: 分析sft数据输出最终答案的格式，使用self.boxed_pattern提取答案)
                 # 2.用prompt2answer获取prompt对应的groundtruth
                 # 3.用math_equal函数评估response是否正确，并据此给出reward
                 # 偷到的情报说，答错全部给-1.0，答对给1.0就可
                 # 去掉所有的相对路径
                 ######################
-
+                
+                # base_score = 0.0
+                # cot_bonus = 0.0
+                # # raise ValueError("{}".format(self.prompt2difficulty[prompt]))
+                
                 # 1
-                model_answer = self.boxed_pattern.search(response).group(1)
+                model_answer_match = self.boxed_pattern.search(response)
+                if not model_answer_match:
+                    # No boxed answer found, penalize the score
+                    return -1.0
+                model_answer = model_answer_match.group(1).strip()
+
+                # # Extract the chain-of-thought (CoT) reasoning text before the boxed answer
+                # cot_text = response[:model_answer_match.start()].strip()
 
                 # 2
                 true_answer = self.prompt2answer.get(prompt)
+                # difficulty = self.prompt2difficulty.get(prompt) # 引入人为bias或许是不对的
+                if true_answer is None:
+                    # no answer in the dataset
+                    return 0.0
 
-                # 3 important
-                if math_equal(true_answer, model_answer):
-                    score = 1.0
-                else:
-                    score = -1.0
+                # 3 correctness
+                is_correct = math_equal(true_answer, model_answer)
+                minus_penalty=max(-0.5,min(0.0,-0.25*((self.count-40000)/40000)))
+                score=1.0 if is_correct else 0.0 if self.count<=40000 else minus_penalty
+                # 假如在训练120轮后还没有答对,-0.2; 200轮后还没有答对，-0.5.
 
+                # base_scores = {"easy": 1.0, "medium": 1.1, "hard": 1.2}
+                # penalty_scores = {"easy": -0.3, "medium": -0.4, "hard": -0.5}
+                # if is_correct:
+                #     base_score += base_scores.get(difficulty, 1.0)
+                # else:
+                #     base_score += penalty_scores.get(difficulty, 0.0)
+
+                # # 3.5 thought process
+                # # maybe not that important?
+
+                # # key words that can evaluate the quality of the answer
+
+                # elements = {
+                #     'transition': (['therefore', ' thus ', 'because', 'since', 'hence'], 0.2),
+                #     'rebuttal': (['but', 'however', 'although', 'despite'], 0.3),
+                #     'verification': (['verify', 'check', 'confirm', 'think'], 0.2),
+                #     'steps': (['step', 'calculate', 'equation', 'reason', 'explain', 'clarify'], 0.3)
+                # }
+
+                # for ele in elements.values():
+                #     words, bonus = ele
+                #     count = sum(cot_text.lower().count(w) for w in words)
+                #     cot_bonus += min(bonus * count/3.0, bonus)
+                    
+                # cot_bonus_weights={'easy': 0.2, 'medium': 0.15, 'hard': 0.1}
+                # cot_bonus_weight=0.02 if is_correct else cot_bonus_weights.get(difficulty, 0.1)
+
+                # # 4 penalty
+                # # repeat pattern check
+                # repeat_penalty = 0.2 if self.repeat_pattern.search(response) else 0.0
+
+                # # useless or meaningless cots
+                # length_penalty = 0.3 if len(cot_text) < 100 else 0.0
+
+                # penalty = repeat_penalty + length_penalty
+                # penalty_weight = 0.0 if is_correct else 1.0
+
+                # # score = base_score * (1.0-cot_bonus_weight) + cot_bonus * cot_bonus_weight - penalty  # for encouraging reasoning
+                # score = base_score*(1-cot_bonus_weight) + cot_bonus*cot_bonus_weight-penalty*penalty_weight # for basic testing
                 return score
 
         except TimeoutException:
@@ -190,6 +249,7 @@ class RuleBasedRMProxy:
         except Exception as e:
             logger.error(f"Error processing query: {str(e)}")
             return -1.0
+            # raise e
 
     def get_reward(self, queries):
         scores = []
